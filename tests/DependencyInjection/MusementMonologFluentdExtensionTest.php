@@ -64,7 +64,21 @@ class MusementMonologFluentdExtensionTest extends \PHPUnit_Framework_TestCase
         $this->assertParameter(Logger::DEBUG, 'musement_monolog_fluentd.level');
     }
 
-    public function assertParameter($value, $key)
+    public function testParameterTagFmt()
+    {
+        $config = $this->getConfig();
+        $this->loader->load($config, $this->container);
+        $this->assertParameter('{{channel}}.{{level_name}}', 'musement_monolog_fluentd.tag_fmt');
+    }
+
+    public function testParameterEnableExceptions()
+    {
+        $config = $this->getConfig();
+        $this->loader->load($config, $this->container);
+        $this->assertParameter(false, 'musement_monolog_fluentd.enable_exceptions');
+    }
+
+    protected function assertParameter($value, $key)
     {
         $this->assertEquals($value, $this->container->getParameter($key));
     }
@@ -77,6 +91,8 @@ musement_monolog_fluentd:
     port: 24224
     options: []
     level: debug
+    tag_fmt: '{{channel}}.{{level_name}}'
+    enable_exceptions: false
 EOF;
         $parser = new Parser();
 

@@ -17,10 +17,15 @@
         </service>
 
         <service id="musement_monolog_fluentd.fluentd_handler" class="%musement_monolog_fluentd.fluentd_handler.class%">
+            <argument type="service" id="musement_monolog_fluentd.fluent_logger" />
             <argument>%musement_monolog_fluentd.level%</argument>
             <argument>true</argument>
-            <argument type="service" id="musement_monolog_fluentd.fluent_logger" />
-            <argument>%musement_monolog_fluentd.tag_fmt%</argument>
+            <call method="setTagFormat">
+                <argument>%musement_monolog_fluentd.tag_fmt%</argument>
+            </call>
+            <call method="setExceptions">
+            <argument>%musement_monolog_fluentd.enable_exceptions%</argument>
+            </call>
         </service>
     </services>
 

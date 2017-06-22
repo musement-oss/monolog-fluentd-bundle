@@ -15,10 +15,13 @@ use Fluent\Logger\Entity;
 use Fluent\Logger\FluentLogger;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
+use Musement\MonologFluentdBundle\Monolog\Exception\MusementMonologFluentdHandlerException;
 use Psr\Log\InvalidArgumentException;
 
 class FluentdHandler extends AbstractProcessingHandler
 {
+    const DEFAULT_TAG_FORMAT = '{{channel}}.{{level_name}}';
+
     /**
      * Maps Monolog log levels to PSR-3 (syslog) log values.
      *
@@ -39,25 +42,26 @@ class FluentdHandler extends AbstractProcessingHandler
     protected $logger;
 
     /** @var string */
-    protected $tagFormat;
+    protected $tagFormat = self::DEFAULT_TAG_FORMAT;
+
+    /** @var bool */
+    protected $exceptions = true;
 
     /**
-     * Handler constructor.
+     * FluentdHandler constructor.
      *
-     * @param int          $level     The minimum logging level at which this handler will be triggered
-     * @param bool         $bubble    Whether the messages that are handled can bubble up the stack or not
-     * @param FluentLogger $logger    An instance of FluentdLogger
-     * @param string       $tagFormat
+     * @param FluentLogger $logger An instance of FluentdLogger
+     * @param int          $level  The minimum logging level at which this handler will be triggered
+     * @param bool         $bubble Whether the messages that are handled can bubble up the stack or not
      */
     public function __construct(
+        FluentLogger $logger,
         $level = Logger::DEBUG,
-        $bubble = true,
-        FluentLogger $logger = null,
-        $tagFormat = null
+        $bubble = true
     ) {
+        $this->logger = $logger;
+
         parent::__construct($level, $bubble);
-        $this->logger = $logger ?: new FluentLogger();
-        $this->tagFormat = $tagFormat ?: '{{channel}}.{{level_name}}';
     }
 
     /**
@@ -68,6 +72,22 @@ class FluentdHandler extends AbstractProcessingHandler
     public function getLogger()
     {
         return $this->logger;
+    }
+
+    /**
+     * @param string $tagFormat
+     */
+    public function setTagFormat($tagFormat)
+    {
+        $this->tagFormat = $tagFormat;
+    }
+
+    /**
+     * @param bool $exceptions
+     */
+    public function setExceptions($exceptions)
+    {
+        $this->exceptions = (bool) $exceptions;
     }
 
     /**
@@ -83,6 +103,8 @@ class FluentdHandler extends AbstractProcessingHandler
      *
      * @param string|int Level number (monolog)
      * @param mixed $level
+     *
+     * @throws InvalidArgumentException
      *
      * @return int Psr-3 level number
      */
@@ -102,7 +124,7 @@ class FluentdHandler extends AbstractProcessingHandler
     /**
      * {@inheritdoc}
      *
-     * @throws \LogicException
+     * @throws \Exception
      */
     protected function write(array $record)
     {
@@ -110,11 +132,21 @@ class FluentdHandler extends AbstractProcessingHandler
 
         $record['level'] = static::toPsr3Level($record['level']);
 
-        $this->logger->post2(new Entity(
-            $this->buildTag($record),
-            $record,
-            $record['datetime']->getTimestamp()
-        ));
+        try {
+            $this->logger->post2(new Entity(
+                $this->buildTag($record),
+                $record,
+                $record['datetime']->getTimestamp()
+            ));
+        } catch (\Exception $e) {
+            if ($this->exceptions) {
+                throw new MusementMonologFluentdHandlerException(
+                    sprintf('An error occurred on fluentd side: "%s".', $e->getMessage()),
+                    0,
+                    $e
+                );
+            }
+        }
     }
 
     /**

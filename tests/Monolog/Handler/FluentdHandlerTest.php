@@ -33,7 +33,10 @@ class FluentdHandlerTest extends \PHPUnit_Framework_TestCase
             ->willReturn(true)
         ;
 
-        $handler = new FluentdHandler($level, true, $spyLogger);
+        $handler = new FluentdHandler($spyLogger, $level, true);
+        $handler->setTagFormat('XXX test XXX.{{level_name}}');
+        $handler->setExceptions(false);
+
         $handler->handle($record);
     }
 
@@ -68,7 +71,7 @@ class FluentdHandlerTest extends \PHPUnit_Framework_TestCase
         $record['level'] = FluentdHandler::toPsr3Level($level);
 
         return new Entity(
-            'test.'.Logger::getLevelName($level),
+            'XXX test XXX.'.Logger::getLevelName($level),
             $record,
             $record['datetime']->getTimestamp()
         );

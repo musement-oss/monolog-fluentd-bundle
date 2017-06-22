@@ -45,6 +45,9 @@ class Configuration implements ConfigurationInterface
                 ->scalarNode('tag_fmt')
                     ->defaultValue(null)
                 ->end()
+                ->scalarNode('enable_exceptions')
+                    ->defaultValue(true)
+                ->end()
             ->end();
 
         return $treeBuilder;
