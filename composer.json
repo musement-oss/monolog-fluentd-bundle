@@ -25,7 +25,7 @@
     },
     "require": {
         "php": "^5.5 || >=7.0 <7.2",
-        "symfony/monolog-bundle": "^2.12",
+        "symfony/monolog-bundle": "^2.12 || ^3.0",
         "fluent/logger": "^0.3"
     },
     "require-dev": {
