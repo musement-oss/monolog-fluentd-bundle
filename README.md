@@ -62,7 +62,7 @@ You may load the handler as a service
       handlers:
         musement_monolog_fluentd:
           type: service
-          id: musement_monolog_fluentd.monolog.handler
+          id: musement_monolog_fluentd.fluentd_handler
 
 ## How to run the tests
 
